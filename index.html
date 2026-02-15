@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Vedic Nakshatra Dashboard - Track current lunar mansion with favorable/unfavorable indicators">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192'%3E%3Crect width='192' height='192' fill='%23667eea'/%3E%3Ctext x='50%25' y='50%25' font-size='120' text-anchor='middle' dy='.3em'%3E🌙%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='180' height='180' fill='%23667eea'/%3E%3Ctext x='50%25' y='50%25' font-size='120' text-anchor='middle' dy='.3em'%3E🌙%3C/text%3E%3C/svg%3E">
+    <title>Nakshatra</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .security-badge {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(76, 175, 80, 0.95);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .float-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+            background: #999;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            z-index: 1000;
+            border: 3px solid white;
+            font-size: 45px;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .float-button:active {
+            transform: scale(0.95);
+        }
+
+        .details-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .details-panel.active {
+            display: flex;
+        }
+
+        .panel-content {
+            background: #1a1a1a;
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-height: 95vh;
+            overflow-y: auto;
+            position: absolute;
+            bottom: 0;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .close-button {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel-body {
+            padding: 30px 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .nakshatra-display {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .moon-indicator {
+            font-size: 100px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .nakshatra-name {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .nakshatra-number {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .moon-degree {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .status-badge {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .details {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #3a3a3a;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .detail-value {
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .time-display {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 10px;
+        }
+
+        .time {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .date {
+            font-size: 14px;
+            color: #888;
+        }
+
+        .refresh-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .refresh-btn:active {
+            transform: scale(0.98);
+        }
+
+        .description {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #aaa;
+        }
+
+        .security-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1e3a1e;
+            border-left: 4px solid #4CAF50;
+            border-radius: 5px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #a5d6a7;
+        }
+    </style>
+</head>
+<body>
+    <div class="security-badge">🔒 Secure HTTPS</div>
+    <button class="float-button" onclick="openPanel()">🌙</button>
+
+    <div class="details-panel" id="detailsPanel">
+        <div class="panel-content">
+            <button class="close-button" onclick="closePanel()">✕ Close</button>
+            <div class="panel-body">
+                <div class="header">
+                    <h1>Nakshatra Dashboard</h1>
+                    <div class="subtitle">Vedic Lunar Mansion</div>
+                </div>
+                <div id="content">
+                    <div style="text-align: center; padding: 40px; color: #888;">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FAVORABLE_NAKSHATRAS = ["Pushya", "Rohini", "Anuradha", "Uttara Phalguni", "Revati"];
+        const NAKSHATRAS = [
+            { name: "Ashwini", deity: "Ashwini Kumaras", symbol: "Horse's Head", ruler: "Ketu" },
+            { name: "Bharani", deity: "Yama", symbol: "Yoni", ruler: "Venus" },
+            { name: "Krittika", deity: "Agni", symbol: "Razor", ruler: "Sun" },
+            { name: "Rohini", deity: "Brahma", symbol: "Cart", ruler: "Moon" },
+            { name: "Mrigashira", deity: "Soma", symbol: "Deer's Head", ruler: "Mars" },
+            { name: "Ardra", deity: "Rudra", symbol: "Teardrop", ruler: "Rahu" },
+            { name: "Punarvasu", deity: "Aditi", symbol: "Bow and Quiver", ruler: "Jupiter" },
+            { name: "Pushya", deity: "Brihaspati", symbol: "Cow's Udder", ruler: "Saturn" },
+            { name: "Ashlesha", deity: "Nagas", symbol: "Serpent", ruler: "Mercury" },
+            { name: "Magha", deity: "Pitris", symbol: "Throne", ruler: "Ketu" },
+            { name: "Purva Phalguni", deity: "Bhaga", symbol: "Hammock", ruler: "Venus" },
+            { name: "Uttara Phalguni", deity: "Aryaman", symbol: "Bed", ruler: "Sun" },
+            { name: "Hasta", deity: "Savitar", symbol: "Hand", ruler: "Moon" },
+            { name: "Chitra", deity: "Vishwakarma", symbol: "Pearl", ruler: "Mars" },
+            { name: "Swati", deity: "Vayu", symbol: "Coral", ruler: "Rahu" },
+            { name: "Vishakha", deity: "Indra-Agni", symbol: "Triumphal Arch", ruler: "Jupiter" },
+            { name: "Anuradha", deity: "Mitra", symbol: "Lotus", ruler: "Saturn" },
+            { name: "Jyeshtha", deity: "Indra", symbol: "Earring", ruler: "Mercury" },
+            { name: "Mula", deity: "Nirriti", symbol: "Root", ruler: "Ketu" },
+            { name: "Purva Ashadha", deity: "Apas", symbol: "Elephant Tusk", ruler: "Venus" },
+            { name: "Uttara Ashadha", deity: "Vishvadevas", symbol: "Planks", ruler: "Sun" },
+            { name: "Shravana", deity: "Vishnu", symbol: "Ear", ruler: "Moon" },
+            { name: "Dhanishta", deity: "Vasus", symbol: "Drum", ruler: "Mars" },
+            { name: "Shatabhisha", deity: "Varuna", symbol: "Circle", ruler: "Rahu" },
+            { name: "Purva Bhadrapada", deity: "Aja Ekapada", symbol: "Sword", ruler: "Jupiter" },
+            { name: "Uttara Bhadrapada", deity: "Ahir Budhnya", symbol: "Twins", ruler: "Saturn" },
+            { name: "Revati", deity: "Pushan", symbol: "Fish", ruler: "Mercury" }
+        ];
+
+        function openPanel() { document.getElementById('detailsPanel').classList.add('active'); }
+        function closePanel() { document.getElementById('detailsPanel').classList.remove('active'); }
+        document.getElementById('detailsPanel').addEventListener('click', (e) => { if (e.target === e.currentTarget) closePanel(); });
+
+        function isFavorableNakshatra(name) { return FAVORABLE_NAKSHATRAS.includes(name); }
+        function getMoonColor(name) { return isFavorableNakshatra(name) ? '#4CAF50' : '#f44336'; }
+        function getMoonEmoji(name) { return isFavorableNakshatra(name) ? '🟢' : '🔴'; }
+
+        function calculateMoonPosition() {
+            const now = new Date();
+            const J2000 = new Date('2000-01-01T12:00:00Z');
+            const daysSinceJ2000 = (now - J2000) / (1000 * 60 * 60 * 24);
+            const moonMeanLongitude = 218.316 + 13.176396 * daysSinceJ2000;
+            const moonLongitude = moonMeanLongitude % 360;
+            return moonLongitude < 0 ? moonLongitude + 360 : moonLongitude;
+        }
+
+        function getNakshatraFromMoonPosition(moonLongitude) {
+            const nakshatraSpan = 360 / 27;
+            const nakshatraIndex = Math.floor(moonLongitude / nakshatraSpan);
+            const degreeInNakshatra = moonLongitude % nakshatraSpan;
+            const pada = Math.floor(degreeInNakshatra / (nakshatraSpan / 4)) + 1;
+            return {
+                nakshatra: NAKSHATRAS[nakshatraIndex],
+                index: nakshatraIndex + 1,
+                moonLongitude: moonLongitude,
+                degreeInNakshatra: degreeInNakshatra,
+                pada: pada
+            };
+        }
+
+        function getRashi(moonLongitude) {
+            const rashis = ["Aries (Mesha)", "Taurus (Vrishabha)", "Gemini (Mithuna)", "Cancer (Karka)", "Leo (Simha)", "Virgo (Kanya)", "Libra (Tula)", "Scorpio (Vrishchika)", "Sagittarius (Dhanu)", "Capricorn (Makara)", "Aquarius (Kumbha)", "Pisces (Meena)"];
+            return rashis[Math.floor(moonLongitude / 30)];
+        }
+
+        function updateFloatingButtonColor() {
+            const moonLongitude = calculateMoonPosition();
+            const data = getNakshatraFromMoonPosition(moonLongitude);
+            const isFavorable = isFavorableNakshatra(data.nakshatra.name);
+            const floatButton = document.querySelector('.float-button');
+            if (floatButton) {
+                if (isFavorable) {
+                    floatButton.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+                    floatButton.style.boxShadow = '0 8px 20px rgba(76, 175, 80, 0.5)';
+                } else {
+                    floatButton.style.background = 'linear-gradient(135deg, #f44336 0%, #e53935 100%)';
+                    floatButton.style.boxShadow = '0 8px 20px rgba(244, 67, 54, 0.5)';
+                }
+            }
+        }
+
+        function updateDashboard() {
+            const moonLongitude = calculateMoonPosition();
+            const data = getNakshatraFromMoonPosition(moonLongitude);
+            const rashi = getRashi(moonLongitude);
+            const moonColor = getMoonColor(data.nakshatra.name);
+            const moonEmoji = getMoonEmoji(data.nakshatra.name);
+            const isFavorable = isFavorableNakshatra(data.nakshatra.name);
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateString = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            document.getElementById('content').innerHTML = `
+                <div class="nakshatra-display">
+                    <div class="moon-indicator">${moonEmoji}</div>
+                    <div class="nakshatra-name">${data.nakshatra.name}</div>
+                    <div class="nakshatra-number">Nakshatra ${data.index} of 27</div>
+                    <div class="moon-degree">Moon at ${moonLongitude.toFixed(2)}°</div>
+                    <div class="status-badge">${isFavorable ? '✓ FAVORABLE NAKSHATRA' : '⚠ UNFAVORABLE NAKSHATRA'}</div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item"><div class="info-label">Pada</div><div class="info-value">${data.pada}/4</div></div>
+                    <div class="info-item"><div class="info-label">Ruler</div><div class="info-value">${data.nakshatra.ruler}</div></div>
+                    <div class="info-item"><div class="info-label">Symbol</div><div class="info-value">${data.nakshatra.symbol}</div></div>
+                    <div class="info-item"><div class="info-label">Deity</div><div class="info-value">${data.nakshatra.deity}</div></div>
+                </div>
+                <div class="details">
+                    <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color: ${moonColor}; font-size: 16px;">${moonEmoji} ${isFavorable ? 'Favorable' : 'Unfavorable'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Moon Rashi (Sign)</span><span class="detail-value">${rashi}</span></div>
+                    <div class="detail-row"><span class="detail-label">Degree in Nakshatra</span><span class="detail-value">${data.degreeInNakshatra.toFixed(2)}°</span></div>
+                    <div class="detail-row"><span class="detail-label">Nakshatra Span</span><span class="detail-value">13°20'</span></div>
+                </div>
+                <div class="time-display"><div class="time">${timeString}</div><div class="date">${dateString}</div></div>
+                <button class="refresh-btn" onclick="updateDashboard(); updateFloatingButtonColor();">🔄 Refresh</button>
+                <div class="description">
+                    <strong>About Nakshatras:</strong> In Vedic astrology, Nakshatras are the 27 lunar mansions that divide the zodiac into equal parts. Each Nakshatra spans 13°20' and has unique qualities, ruling deity, and planetary ruler.
+                    <br><br><strong>Favorable Nakshatras (🟢 Green):</strong> Pushya, Rohini, Anuradha, Uttara Phalguni, and Revati are considered highly auspicious for starting new ventures and important activities.
+                    <br><br><strong>Unfavorable Nakshatras (🔴 Red):</strong> All other Nakshatras - proceed with caution for major decisions.
+                </div>
+                <div class="security-info"><strong>🔒 Privacy & Security:</strong><br>✓ HTTPS secure connection<br>✓ No data sent to external servers<br>✓ No tracking or analytics<br>✓ Works offline after first load</div>
+            `;
+        }
+
+        updateDashboard();
+        updateFloatingButtonColor();
+        setInterval(() => { updateDashboard(); updateFloatingButtonColor(); }, 60000);
+    </script>
+</body>
+</html>
